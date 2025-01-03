@@ -25,7 +25,7 @@ spec:
       - name: ecr-registry-secret
       containers:
       - name: frontend
-        image: us-east1-docker.pkg.dev/dulcet-glazing-444913-i8/frontend/three-tier-frontend:3
+        image: us-east1-docker.pkg.dev/dulcet-glazing-444913-i8/frontend/three-tier-frontend:1
         imagePullPolicy: Always
         env:
           - name: REACT_APP_BACKEND_URL
