@@ -108,7 +108,7 @@ pipeline {
         }
         stage('Update Deployment file') {
             steps {
-                dir('Kubernetes-Manifests-file/Frontend'){
+                dir('k8_manifestfile/frontend'){
                 sshagent(['github_login']) {
                     sh ''' 
                             BUILD_NUMBER=${BUILD_NUMBER}
