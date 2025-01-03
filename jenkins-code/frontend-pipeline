@@ -1,0 +1,129 @@
+pipeline {
+    agent any 
+
+    tools {
+        nodejs 'nodejs'
+    }
+    environment  {
+        SCANNER_HOME=tool 'sonar-scanner'
+        GCP_PROJECTID = credentials('project_id')
+        REPO_NAME = credentials('GCR_REPO1')
+        GCP_REGION = 'us-east1'
+        IMAGE_NAME = "three-tier-${REPO_NAME}"
+        GCLOUD_CREDENTIALS = credentials('terraform-sa') // Use your credential ID
+        ARTIFACT_REGISTRY = "${GCP_REGION}-docker.pkg.dev/${GCP_PROJECTID}/${REPO_NAME}"
+    }
+    stages {
+        stage('Cleaning Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+
+         stage('Authenticate with GCP') {
+            steps {
+                withCredentials([file(credentialsId: 'terraform-sa', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                    sh '''
+                    gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}
+                    gcloud config set project ${GCP_PROJECTID}
+                    '''
+                }
+            }
+        }
+
+        stage('Checkout from Git') {
+            steps {
+                sshagent(['github_login']) {
+                    sh 'git clone git@github.com:LogeshKS/three_tier_application_devsecops_demo.git'
+                }
+            }
+        }
+        
+        stage('Sonarqube Analysis') {
+            steps {
+                dir('Application-Code/frontend') {
+                    withSonarQubeEnv('sonar-server') {
+                        sh ''' $SCANNER_HOME/bin/sonar-scanner \
+                        -Dsonar.projectName=frontend \
+                        -Dsonar.projectKey=frontend '''
+                    }
+                }
+            }
+        }
+        stage('Quality Check') {
+            steps {
+                script {
+                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token' 
+                }
+            }
+        }
+        stage('OWASP Dependency-Check Scan') {
+            steps {
+                dir('Application-Code/frontend') {
+                    dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
+                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+                }
+            }
+        }
+        stage('Trivy File Scan') {
+            steps {
+                dir('Application-Code/frontend') {
+                    sh 'trivy fs . > trivyfs.txt'
+                }
+            }
+        }
+        stage("Docker Image Build") {
+            steps {
+                script {
+                    dir('Application-Code/frontend') {
+                            sh 'docker system prune -f'
+                            sh 'docker container prune -f'
+                            sh 'docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} .'
+                    }
+                }
+            }
+        }
+        stage("Image Pushing") {
+            steps {
+                script {
+                        sh 'docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${ARTIFACT_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}'
+                        sh 'docker push ${ARTIFACT_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}'
+                }
+            }
+        }
+        
+        stage("TRIVY Image Scan") {
+            steps {
+                sh 'trivy image ${ARTIFACT_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER} > trivyimage.txt' 
+            }
+        }
+
+
+        stage('Checkout Code') {
+             steps {
+                sshagent(['github_login']) {
+                    sh 'git clone git@github.com:LogeshKS/three_tier_application_devsecops_demo.git'
+                }
+            }
+        }
+        stage('Update Deployment file') {
+            steps {
+                dir('Kubernetes-Manifests-file/Frontend'){
+                sshagent(['github_login']) {
+                    sh ''' 
+                            BUILD_NUMBER=${BUILD_NUMBER}
+                            echo $BUILD_NUMBER
+                            imageTag=$(grep -oP '(?<=frontend:)[^ ]+' deployment.yaml)
+                            echo $imageTag
+                            sed -i "s|${ARTIFACT_REGISTRY}/${IMAGE_NAME}:${imageTag}|${ARTIFACT_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}|" deployment.yaml
+                            git add deployment.yaml
+                            git commit -m "Update deployment Image to version \${BUILD_NUMBER}"
+                            git push git@github.com:LogeshKS/three_tier_application_devsecops_demo.git HEAD:main
+                    '''
+                }
+                }
+            }    
+
+        }
+    }
+}
