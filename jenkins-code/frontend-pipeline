@@ -69,7 +69,7 @@ pipeline {
         // }
         stage('Trivy File Scan') {
             steps {
-                dir('Application-Code/frontend') {
+                dir('three_tier_application_devsecops_demo/Application-Code/frontend') {
                     sh 'trivy fs . > trivyfs.txt'
                 }
             }
