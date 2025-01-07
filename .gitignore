@@ -4,5 +4,4 @@
 **/trivyfs.txt
 
 # Ignore temporary files
-**/@tmp/
-../****@tmp/
+**/*@tmp/
