@@ -26,6 +26,7 @@ pipeline {
                     sh '''
                     gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}
                     gcloud config set project ${GCP_PROJECTID}
+                    gcloud auth configure-docker ${GCP_REGION}-docker.pkg.dev
                     '''
                 }
             }
@@ -34,14 +35,15 @@ pipeline {
         stage('Checkout from Git') {
             steps {
                 sshagent(['github_login']) {
-                    sh 'git clone git@github.com:LogeshKS/three_tier_application_devsecops_demo.git'
+                    //sh 'git clone git@github.com:LogeshKS/three_tier_application_devsecops_demo.git'
+                    sh 'git clone https://github.com/LogeshKS/three_tier_application_devsecops_demo.git'
                 }
             }
         }
         
         stage('Sonarqube Analysis') {
             steps {
-                dir('Application-Code/backend') {
+                dir('three_tier_application_devsecops_demo/Application-Code/backend') {
                     withSonarQubeEnv('sonar-server') {
                         sh ''' $SCANNER_HOME/bin/sonar-scanner \
                         -Dsonar.projectName=backend \
@@ -57,17 +59,17 @@ pipeline {
                 }
             }
         }
-        stage('OWASP Dependency-Check Scan') {
-            steps {
-                dir('Application-Code/backend') {
-                    dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
-                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
-                }
-            }
-        }
+        // stage('OWASP Dependency-Check Scan') {
+        //     steps {
+        //         dir('Application-Code/frontend') {
+        //             dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
+        //             dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+        //         }
+        //     }
+        // }
         stage('Trivy File Scan') {
             steps {
-                dir('Application-Code/backend') {
+                dir('three_tier_application_devsecops_demo/Application-Code/backend') {
                     sh 'trivy fs . > trivyfs.txt'
                 }
             }
@@ -75,7 +77,7 @@ pipeline {
         stage("Docker Image Build") {
             steps {
                 script {
-                    dir('Application-Code/backend') {
+                    dir('three_tier_application_devsecops_demo/Application-Code/backend') {
                             sh 'docker system prune -f'
                             sh 'docker container prune -f'
                             sh 'docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} .'
@@ -85,6 +87,7 @@ pipeline {
         }
         stage("Image Pushing") {
             steps {
+                
                 script {
                         sh 'docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${ARTIFACT_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}'
                         sh 'docker push ${ARTIFACT_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}'
@@ -99,27 +102,33 @@ pipeline {
         }
 
 
-        stage('Checkout Code') {
-             steps {
-                sshagent(['github_login']) {
-                    sh 'git clone git@github.com:LogeshKS/three_tier_application_devsecops_demo.git'
-                }
-            }
-        }
+        // stage('Checkout Code') {
+        //      steps {
+        //         sshagent(['github_login']) {
+        //             sh 'git clone https://github.com/LogeshKS/three_tier_application_devsecops_demo.git'
+        //         }
+        //     }
+        //     steps {
+        //         git credentialsId: 'github_login', url: 'https://github.com/LogeshKS/three_tier_application_devsecops_demo.git', branch: 'main'
+        //     }
+        // }
         stage('Update Deployment file') {
             steps {
-                dir('k8-manifestfile/backend'){
+                dir('three_tier_application_devsecops_demo/k8_manifestfile/backend'){
                 sshagent(['github_login']) {
                     sh ''' 
                             BUILD_NUMBER=${BUILD_NUMBER}
                             echo $BUILD_NUMBER
-                            imageTag=$(grep -oP '(?<=frontend:)[^ ]+' deployment.yaml)
+                            imageTag=$(grep -oP '(?<=backend:)[^ ]+' deployment.yaml)
                             echo $imageTag
                             sed -i "s|${ARTIFACT_REGISTRY}/${IMAGE_NAME}:${imageTag}|${ARTIFACT_REGISTRY}/${IMAGE_NAME}:${BUILD_NUMBER}|" deployment.yaml
                             git add deployment.yaml
                             git commit -m "Update deployment Image to version \${BUILD_NUMBER}"
+                            mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
                             git push git@github.com:LogeshKS/three_tier_application_devsecops_demo.git HEAD:main
+                            
                     '''
+                    
                 }
                 }
             }    

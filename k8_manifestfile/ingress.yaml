@@ -4,12 +4,18 @@ metadata:
   name: mainlb
   namespace: three-tier
   annotations:
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+    kubernetes.io/ingress.class: "gce"
+    ingress.gcp.kubernetes.io/backends-config: '{"default": {"customRequestHeaders": [{"name": "x-env", "value": "dev"}]}}'
+    #alb.ingress.kubernetes.io/target-type: ip
+    #alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
     # alb.ingress.kubernetes.io/subnets: "subnet-0aa439b4ddafcca10,subnet-0b95df318219145ca,subnet-0ccca36474902829a"
 spec:
-  ingressClassName: alb
+  defaultBackend: 
+    service:
+      name : default-backend
+      port:
+        number: 80
+        
   rules:
     - host: lokidevops.study
       http:
