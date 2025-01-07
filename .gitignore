@@ -1,0 +1,7 @@
+**/.scannerwork/
+
+# Ignore Trivy scan output
+**/trivyfs.txt
+
+# Ignore temporary files
+**/@tmp/
