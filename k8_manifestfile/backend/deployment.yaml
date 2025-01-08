@@ -22,7 +22,7 @@ spec:
         role: api
     spec:
       imagePullSecrets:
-      -name: ecr-registry-secret
+      -name: google-registry-secret
       containers:
       -name: api
       image: us-east1-docker.pkg.dev/dulcet-glazing-444913-i8/backend/three-tier-backend:13
