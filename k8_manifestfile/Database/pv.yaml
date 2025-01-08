@@ -9,5 +9,6 @@ spec:
   volumeMode: Filesystem
   accessModes:
     - ReadWriteOnce
-  hostPath:
+  gcePersistentDisk:
+    fsType: ext4
     path: /data/db
