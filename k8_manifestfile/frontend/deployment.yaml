@@ -30,6 +30,6 @@ spec:
         env:
           - name: REACT_APP_BACKEND_URL
             #value: "http://lokidevops.study/api/tasks"
-            value: "http://api.three-tier.svc.cluster.local:3500/api/tasks"
+            value: "http://34.13.72.172/api/tasks"
         ports:
         - containerPort: 3000
