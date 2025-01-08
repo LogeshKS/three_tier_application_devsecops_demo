@@ -22,11 +22,11 @@ spec:
         role: api
     spec:
       imagePullSecrets:
-      -name: google-registry-secret
+      - name: google-registry-secret
       containers:
-      -name: api
-      image: us-east1-docker.pkg.dev/dulcet-glazing-444913-i8/backend/three-tier-backend:13
-      imagePullPolicy: Always
+      - name: api
+        image: us-east1-docker.pkg.dev/dulcet-glazing-444913-i8/backend/three-tier-backend:13
+        imagePullPolicy: Always
       env:
         - name: MONGO_CONN_STR
           value: mongodb://mongodb-svc:27017/todo?directConnection=true
