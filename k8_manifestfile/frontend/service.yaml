@@ -3,6 +3,8 @@ kind: Service
 metadata: 
   name: frontend
   namespace: three-tier
+  annotations:
+    cloud.google.com/neg: '{"ingress": true}'
 spec:
   ports:
   - port: 3000
