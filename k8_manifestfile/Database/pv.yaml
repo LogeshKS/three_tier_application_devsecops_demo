@@ -11,5 +11,5 @@ spec:
     - ReadWriteOnce
   gcePersistentDisk:
     fsType: ext4
-    pdName: pvc-b213ef60-4a5c-4a35-805f-450e170d9d2e
+    pdName: pvc-428d47e0-4a64-429f-aeec-f87fb5e25f77
 
