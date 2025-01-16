@@ -1,0 +1,29 @@
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: api-backend-config
+  namespace: three-tier
+spec:
+  healthCheck:
+    checkIntervalSec: 10
+    timeoutSec: 5
+    requestPath: /healthz
+    port: 3500
+  timeoutSec: 30
+  sessionAffinity:
+    affinityType: "CLIENT_IP"
+---
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: frontend-backend-config
+  namespace: three-tier
+spec:
+  healthCheck:
+    checkIntervalSec: 10
+    timeoutSec: 5
+    requestPath: /
+    port: 3000
+  timeoutSec: 30
+  sessionAffinity:
+    affinityType: "CLIENT_IP"
