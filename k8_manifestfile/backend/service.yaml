@@ -5,7 +5,6 @@ metadata:
   namespace: three-tier
   annotations:
     cloud.google.com/neg: '{"ingress": true, "exposed_ports": {"3500":{}}}'
-    cloud.google.com/backend-config: '{"default": "api-backend-config"}'
 spec:
   selector:
     role: api  # Ensure this matches the labels in your pods
