@@ -7,7 +7,8 @@ metadata:
     kubernetes.io/ingress.class: "gce"
     ingress.gcp.kubernetes.io/allow-http: "true"
     ingress.gcp.kubernetes.io/global-static-ip-name: "global-lb-ip"
-    ingress.gcp.kubernetes.io/backends-config: '{"default": {"customRequestHeaders": [{"name": "x-env", "value": "dev"}]}}'
+    ingress.gcp.kubernetes.io/enable-global-access: "true"
+    
 spec:
   # defaultBackend: 
   #   service:
