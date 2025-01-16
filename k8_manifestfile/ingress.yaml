@@ -7,7 +7,7 @@ metadata:
     kubernetes.io/ingress.class: "gce"
     ingress.gcp.kubernetes.io/allow-http: "true"
     ingress.gcp.kubernetes.io/global-static-ip-name: "global-lb-ip"
-    ingress.gcp.kubernetes.io/enable-global-access: "true"
+    # ingress.gcp.kubernetes.io/enable-global-access: "true"
     
 spec:
   # defaultBackend: 
@@ -26,27 +26,27 @@ spec:
                 name: api
                 port:
                   number: 3500
-          # - path: /healthz
-          #   pathType: Exact
-          #   backend:
-          #     service:
-          #       name: api
-          #       port:
-          #         number: 3500
-          # - path: /ready
-          #   pathType: Exact
-          #   backend:
-          #     service:
-          #       name: api
-          #       port:
-          #         number: 3500
-          # - path: /started
-          #   pathType: Exact
-          #   backend:
-          #     service:
-          #       name: api
-          #       port:
-          #         number: 3500
+          - path: /healthz
+            pathType: Exact
+            backend:
+              service:
+                name: api
+                port:
+                  number: 3500
+          - path: /ready
+            pathType: Exact
+            backend:
+              service:
+                name: api
+                port:
+                  number: 3500
+          - path: /started
+            pathType: Exact
+            backend:
+              service:
+                name: api
+                port:
+                  number: 3500
           - path: /
             pathType: Prefix
             backend:
